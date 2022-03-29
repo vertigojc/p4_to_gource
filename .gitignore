@@ -1,0 +1,9 @@
+__pycache__/
+.env/
+
+# Ignore logs
+*.log
+
+# ignore pyinstaller intermediate files
+build/
+*.spec
