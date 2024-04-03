@@ -7,23 +7,51 @@ from collections import Counter
 
 import P4
 
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
 
 try:
     p4 = P4.P4()
 except:
-    eprint("Could not load P4 module. Make sure the P4 CLI is installed on this computer.")
+    eprint(
+        "Could not load P4 module. Make sure the P4 CLI is installed on this computer."
+    )
     sys.exit(1)
 
-parser = argparse.ArgumentParser(description="Gather data from Perforce server for reporting and creates Gource-style log for visualizations.")
+parser = argparse.ArgumentParser(
+    description="Gather data from Perforce server for reporting and creates Gource-style log for visualizations."
+)
 
-parser.add_argument("depotPath", nargs="*", help="Depot path to collect data from. Defaults to '//...' which will include all branches of all depots on the server.", default=["//..."])
-parser.add_argument("-p", "--port", help="Overrides any P4PORT setting with the specified protocol:host:port.")
-parser.add_argument("-P", "--password", help="Enables a password (or ticket) to be passed on the command line, thus bypassing the password associated with P4PASSWD.")
-parser.add_argument("-u", "--user", help="Overrides any P4USER setting with the specified user name.")
-parser.add_argument("--no-gource", dest="do_gource", help="Disables the creation of a Gource log.", action="store_false")
-parser.add_argument("-l", "--logname", help="Name of Gource log file to create.", default="gource.log")
+parser.add_argument(
+    "depotPath",
+    nargs="*",
+    help="Depot path to collect data from. Defaults to '//...' which will include all branches of all depots on the server.",
+    default=["//..."],
+)
+parser.add_argument(
+    "-p",
+    "--port",
+    help="Overrides any P4PORT setting with the specified protocol:host:port.",
+)
+parser.add_argument(
+    "-P",
+    "--password",
+    help="Enables a password (or ticket) to be passed on the command line, thus bypassing the password associated with P4PASSWD.",
+)
+parser.add_argument(
+    "-u", "--user", help="Overrides any P4USER setting with the specified user name."
+)
+parser.add_argument(
+    "--no-gource",
+    dest="do_gource",
+    help="Disables the creation of a Gource log.",
+    action="store_false",
+)
+parser.add_argument(
+    "-l", "--logname", help="Name of Gource log file to create.", default="gource.log"
+)
 
 
 REGEX_DEFS = {
@@ -48,9 +76,9 @@ def main(args):
 
     start_time = time.time()
     print("Getting info on all changelists on server...", end=" ")
-    cl_numbers = set()
+    cl_numbers = []
     for depot_path in args.depotPath:
-        cl_numbers.update(cl["change"] for cl in get_changelists(depot_path))
+        cl_numbers = list(cl["change"] for cl in get_changelists(depot_path))
     print(f"(took {round(time.time() - start_time)} seconds)")
 
     description_time = time.time()
@@ -70,7 +98,7 @@ def main(args):
         create_gource_log(file_data, args.logname)
         print(f"(took {round(time.time() - gource_time)} seconds)")
         print(f"Gource log created at {pathlib.Path(args.logname).absolute()}")
-    
+
     print(f"Total Duration: {round(time.time() - start_time)} seconds\n")
     print(f"# of Changelists: {len(cl_numbers)}")
     print(f"# of Users: {len(unique_usernames)}")
@@ -78,6 +106,7 @@ def main(args):
     for action in action_counter:
         print(f"  {action.ljust(12)} {action_counter[action]}")
     return file_data
+
 
 def connect_to_p4(port=None, user=None, passwd=None):
     try:
@@ -92,6 +121,7 @@ def connect_to_p4(port=None, user=None, passwd=None):
     except:
         eprint(f"Could not connect to Perforce server at {p4.port} as {p4.user}")
         sys.exit(1)
+
 
 def make_regex(depotPaths):
     """Converts a depot path to a regex Pattern object"""
@@ -114,6 +144,8 @@ def get_file_actions(descriptions, regex):
     action_counter = Counter()
     unique_usernames = set()
     for description in descriptions:
+        if int(description["change"]) <= 139:
+            description["time"] = "1711566105"
         if "action" not in description:
             continue
         for i in range(len(description["action"])):
@@ -128,7 +160,6 @@ def get_file_actions(descriptions, regex):
                 )
                 action_counter[description["action"][i]] += 1
                 unique_usernames.add(description["user"])
-                
     return per_file_data, action_counter, unique_usernames
 
 

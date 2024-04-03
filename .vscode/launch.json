@@ -11,7 +11,13 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": []
+            "args": [
+                "//Titan/Main/..."
+            ],
+            "env": {
+                "P4PORT": "ssl:54.153.125.13:1666",
+                "P4USER": "j.lindgren"
+            }
         }
     ]
 }
