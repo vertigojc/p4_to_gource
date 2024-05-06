@@ -31,6 +31,11 @@ parser.add_argument(
     default=["//..."],
 )
 parser.add_argument(
+    "-e",
+    "--exclude",
+    help="A path element to exclude from the results. Can be used multiple times.",
+)
+parser.add_argument(
     "-p",
     "--port",
     help="Overrides any P4PORT setting with the specified protocol:host:port.",
@@ -55,7 +60,7 @@ parser.add_argument(
 
 
 REGEX_DEFS = {
-    "*": "[^\/]+",
+    "*": "[^\\/]+",
     "...": ".+",
 }
 
@@ -89,7 +94,9 @@ def main(args):
     action_time = time.time()
     print("Getting file actions from Changelists...", end=" ")
     regex = make_regex(args.depotPath)
-    file_data, action_counter, unique_usernames = get_file_actions(descriptions, regex)
+    file_data, action_counter, unique_usernames = get_file_actions(
+        descriptions, regex, excludes=args.exclude
+    )
     print(f"(took {round(time.time() - action_time)} seconds)")
 
     if args.do_gource:
@@ -139,17 +146,18 @@ def get_descriptions(cl_numbers):
     return p4.run("describe", "-s", *cl_numbers)
 
 
-def get_file_actions(descriptions, regex):
+def get_file_actions(descriptions, regex, excludes):
     per_file_data = []
     action_counter = Counter()
     unique_usernames = set()
     for description in descriptions:
-        if int(description["change"]) <= 139:
-            description["time"] = "1711566105"
         if "action" not in description:
             continue
         for i in range(len(description["action"])):
-            if is_in_path(description["depotFile"][i], regex):
+            if (
+                is_in_path(description["depotFile"][i], regex)
+                and excludes not in description["depotFile"][i]
+            ):
                 per_file_data.append(
                     {
                         "timestamp": description["time"],

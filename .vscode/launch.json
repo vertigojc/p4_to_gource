@@ -6,13 +6,15 @@
     "configurations": [
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
+            "program": "src/p2g.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "//Titan/Main/..."
+                "//Titan/Main/Content/...",
+                "-e",
+                "__External"
             ],
             "env": {
                 "P4PORT": "ssl:54.153.125.13:1666",
